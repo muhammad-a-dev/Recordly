@@ -1,4 +1,4 @@
-import { globalShortcut } from "electron";
+import { app, globalShortcut } from "electron";
 import { captureManualZoomMarker } from "./ipc/cursor/telemetry";
 
 const RECORDING_ZOOM_SHORTCUT = "CommandOrControl+Alt+Z";
@@ -6,6 +6,7 @@ const RECORDING_ZOOM_SHORTCUT_THROTTLE_MS = 500;
 
 let recordingZoomShortcutRegistered = false;
 let lastRecordingZoomShortcutAtMs = 0;
+let beforeQuitHookInstalled = false;
 
 function addRecordingZoomMarkerFromShortcut() {
 	const now = Date.now();
@@ -19,7 +20,18 @@ function addRecordingZoomMarkerFromShortcut() {
 	}
 }
 
+function ensureBeforeQuitHook() {
+	if (beforeQuitHookInstalled) {
+		return;
+	}
+	beforeQuitHookInstalled = true;
+	app.on("before-quit", () => {
+		unregisterRecordingZoomShortcut();
+	});
+}
+
 export function registerRecordingZoomShortcut() {
+	ensureBeforeQuitHook();
 	if (recordingZoomShortcutRegistered) {
 		return;
 	}
