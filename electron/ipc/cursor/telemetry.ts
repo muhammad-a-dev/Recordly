@@ -254,7 +254,12 @@ export function pushCursorSample(
 	} as CursorTelemetryPoint);
 
 	if (activeCursorSamples.length > MAX_CURSOR_SAMPLES) {
-		activeCursorSamples.shift();
+		const oldestNonMarkerIndex = activeCursorSamples.findIndex(
+			(sample) => sample.interactionType !== "manual-zoom",
+		);
+		if (oldestNonMarkerIndex >= 0) {
+			activeCursorSamples.splice(oldestNonMarkerIndex, 1);
+		}
 	}
 }
 

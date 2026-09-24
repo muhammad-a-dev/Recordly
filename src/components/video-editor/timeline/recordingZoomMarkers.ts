@@ -40,34 +40,43 @@ export function buildManualRecordingZoomRegions(params: {
 		)
 		.sort((a, b) => a.timeMs - b.timeMs);
 
-	for (const marker of markers) {
+	for (let i = 0; i < markers.length; i++) {
+		const marker = markers[i];
 		const start = Math.max(0, Math.min(Math.round(marker.timeMs), totalMs));
 		if (start >= totalMs) {
 			continue;
 		}
 
+		// Only pre-existing reserved spans suppress markers; regions generated in
+		// this pass must not drop later accepted shortcut presses.
 		const overlapsExisting = reserved.some((span) => start >= span.start && start < span.end);
 		if (overlapsExisting) {
 			continue;
 		}
 
 		const nextSpan = reserved.find((span) => span.start > start);
-		const end = Math.min(start + duration, nextSpan?.start ?? totalMs, totalMs);
+		const nextMarker = markers[i + 1];
+		const nextMarkerStart =
+			nextMarker !== undefined
+				? Math.max(0, Math.min(Math.round(nextMarker.timeMs), totalMs))
+				: undefined;
+
+		let end = Math.min(start + duration, nextSpan?.start ?? totalMs, totalMs);
+		if (nextMarkerStart !== undefined && nextMarkerStart > start) {
+			end = Math.min(end, nextMarkerStart);
+		}
 		if (end <= start) {
 			continue;
 		}
 
-		const region = {
+		regions.push({
 			start,
 			end,
 			focus: {
 				cx: Math.max(0, Math.min(marker.cx, 1)),
 				cy: Math.max(0, Math.min(marker.cy, 1)),
 			},
-		};
-		regions.push(region);
-		reserved.push(region);
-		reserved.sort((a, b) => a.start - b.start);
+		});
 	}
 
 	return regions;

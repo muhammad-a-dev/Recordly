@@ -36,4 +36,20 @@ describe("buildManualRecordingZoomRegions", () => {
 
 		expect(regions).toEqual([{ start: 2100, end: 2600, focus: { cx: 1, cy: 0 } }]);
 	});
+
+	it("keeps close shortcut presses as adjacent non-overlapping regions", () => {
+		const regions = buildManualRecordingZoomRegions({
+			cursorTelemetry: [
+				{ timeMs: 1200, cx: 0.25, cy: 0.75, interactionType: "manual-zoom" },
+				{ timeMs: 1800, cx: 0.4, cy: 0.6, interactionType: "manual-zoom" },
+			],
+			totalMs: 5000,
+			defaultDurationMs: 1000,
+		});
+
+		expect(regions).toEqual([
+			{ start: 1200, end: 1800, focus: { cx: 0.25, cy: 0.75 } },
+			{ start: 1800, end: 2800, focus: { cx: 0.4, cy: 0.6 } },
+		]);
+	});
 });
