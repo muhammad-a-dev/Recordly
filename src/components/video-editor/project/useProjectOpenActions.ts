@@ -1,1 +1,1 @@
-test
+@/tmp/open_content_only.txt
